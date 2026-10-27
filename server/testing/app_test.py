@@ -26,6 +26,19 @@ class TestApp:
             assert(response_json['username'] == user.username)
             assert(flask.session.get('user_id') == user.id)
 
+    def test_login_rejects_missing_or_unknown_user(self):
+        '''returns client errors when the request does not identify a user.'''
+        with app.test_client() as client:
+            missing_username = client.post('/login', json={})
+            unknown_user = client.post('/login', json={
+                'username': '__missing_user__'
+            })
+
+            assert(missing_username.status_code == 400)
+            assert(unknown_user.status_code == 404)
+            with client.session_transaction() as session:
+                assert('user_id' not in session)
+
     def test_logs_user_out(self):
         '''removes user_id from session at /logout.'''
         with app.test_client() as client:
